@@ -3,9 +3,6 @@ from datetime import datetime
 from typing import Optional
 
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-
-from .spotipy_ssm_credentials_cache import SSMCacheHandler
 
 
 class CustomSpotifyBlendCreator:
@@ -23,10 +20,10 @@ class CustomSpotifyBlendCreator:
         self.destination_playlist_id = destination_playlist_id
 
     @staticmethod
-    def _extract_artist_ids_for_track(track: dict) -> list[str]:
+    def _extract_artist_ids_for_track(track):
         return [artist["id"] for artist in track["artists"]]
 
-    def _get_banned_artist_ids(self) -> list[str]:
+    def _get_banned_artist_ids(self):
         banned_playlist_items = self.sp.playlist_tracks(self.banned_playlist_id)[
             "items"
         ]
@@ -37,7 +34,7 @@ class CustomSpotifyBlendCreator:
         ]
         return banned_artists
 
-    def _create_playlist_with_tracks(self, tracks: list[str]) -> dict:
+    def _create_playlist_with_tracks(self, tracks):
         if self.destination_playlist_id is None:
             playlist_id = self.sp.user_playlist_create(
                 self.user_id,
@@ -72,26 +69,3 @@ class CustomSpotifyBlendCreator:
             )
         ]
         return self._create_playlist_with_tracks(new_playlist)
-
-
-def lambda_handler(event, context):
-    client = CustomSpotifyBlendCreator(
-        spotipy.Spotify(
-            auth_manager=SpotifyOAuth(
-                client_id=os.getenv("SPOTIFY_CLIENT_ID"),
-                client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
-                redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
-                scope=[
-                    "playlist-modify-private",
-                    "playlist-modify-public",
-                    "playlist-read-private",
-                ],
-                cache_handler=SSMCacheHandler("/spotify/credcache"),
-            ),
-        ),
-        blend_playlist_id=os.getenv("BLEND_PLAYLIST_ID"),
-        banned_playlist_id=os.getenv("BANNED_PLAYLIST_ID"),
-        destination_playlist_id=os.getenv("DISTINATION_PLAYLIST_ID"),
-    )
-    playlist = client.create_modified_blend()
-    return {"playlistUrl": f"https://open.spotify.com/playlist/{playlist}"}

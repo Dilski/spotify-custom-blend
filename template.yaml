@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  custom-spotify-blend
+
+  SAM Template for custom-spotify-blend
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+
+Resources:
+  SpotifyBlendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: spotify_blend/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        CWSchedule:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: 'cron(30 6 * * ? *)'
+      Policies:
+      - Statement:
+        - Sid: SSMWriteParameterPolicy
+          Effect: Allow
+          Action:
+          - ssm:GetParameters
+          - ssm:GetParameter
+          - ssm:DescribeParameters
+          - ssm:PutParameter
+          Resource: '*'

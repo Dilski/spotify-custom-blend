@@ -13,14 +13,16 @@ class SSMCacheHandler(CacheHandler):
         """
         Get and return a token_info dictionary object.
         """
-        response = self.client.get_parameter(Name=self.ssm_client, WithDecryption=True)
+        response = self.ssm_client.get_parameter(
+            Name=self.param_name, WithDecryption=True
+        )
         return json.loads(response["Parameter"]["Value"])
 
     def save_token_to_cache(self, token_info):
         """
         Save a token_info dictionary object to the cache and return None.
         """
-        self.client.put_parameter(
+        self.ssm_client.put_parameter(
             Name=self.param_name,
             Value=json.dumps(token_info),
             Type="SecureString",
